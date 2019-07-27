@@ -1,4 +1,4 @@
-# ItemsCatalog
+# BestPlaces
 Udacity Project
 
 ## Requirements
