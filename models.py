@@ -21,8 +21,7 @@ class User(Base):
     name = Column(String(250), nullable=False)
     email = Column(String(250), nullable=False)
     picture = Column(String(250))
-    categories = relationship('Category')
-    items = relationship('Item')
+    checkpoints = relationship('Checkpoint')
 
     @property
     def serialize(self):
@@ -35,31 +34,31 @@ class User(Base):
         }
 
 
-class Category(Base):
-    __tablename__ = 'categories'
+class Token(Base):
+    __tablename__ = 'tokens'
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id'))
     name = Column(String(250), nullable=False)
-    items = relationship('Item')
+    token = Column(String(250), nullable=False)
 
     @property
     def serialize(self):
 
         return {
             'id': self.id,
-            'name': self.name
+            'name': self.name,
+            'token': self.token
         }
 
 
-class Item(Base):
-    __tablename__ = 'items'
+class Checkpoint(Base):
+    __tablename__ = 'checkpoints'
 
-    name = Column(String(80), nullable=False)
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('users.id'))
-    category_id = Column(Integer, ForeignKey('categories.id'))
-    category = relationship(Category)
+    name = Column(String(250), nullable=False)
+    coordinates = Column(String(250), nullable=False)
+    address = Column(String(250))
     description = Column(String(250))
 
     @property
@@ -68,11 +67,13 @@ class Item(Base):
         return {
             'id': self.id,
             'name': self.name,
+            'coordinates': self.coordinates,
+            'address': self.address,
             'description': self.description
         }
 
 engine = create_engine('postgresql://'+os.getenv('user') +
-                       ':'+os.getenv('password')+'@localhost:5432/catalog')
+                       ':'+os.getenv('password')+'@localhost:5432/bestplaces')
 
 if not database_exists(engine.url):
     create_database(engine.url)

@@ -1,6 +1,6 @@
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, make_response
 from flask import url_for, flash, jsonify, Response, session as login_session
-from models import Base, Category, Item, User
+from models import Base, Checkpoint, User, Token
 from sqlalchemy import Column, ForeignKey, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
@@ -14,7 +14,7 @@ from functools import wraps
 import os.path
 
 engine = create_engine('postgresql://'+os.getenv('user') +
-                       ':'+os.getenv('password')+'@localhost:5432/catalog')
+                       ':'+os.getenv('password')+'@localhost:5432/bestplaces')
 
 Base.metadata.bind = engine
 
@@ -27,9 +27,9 @@ oauth = OAuth(app)
 
 auth0 = oauth.register(
     'auth0',
-    client_id='GHFAORqpG5uLMAqqBPF1w4DxhUlaaBFq',
-    client_secret='thcXJvcu2wnI5ejcK_xpmsk3yu73cY7N' +
-    'LZBgy2uFQFOCIXLSNiCgFvhfvMZCjtRJ',
+    client_id='yhuJDot9gC0quQQeVBmliVO6awv2GExd',
+    client_secret='xbhnxFiMBhRn4FM6cw6l3gH80VYN5M' +
+    'bTyW0RbL5PfOPqD0eFUuUOi8aff8Dn7SKh',
     api_base_url='https://fadingminotaur5.auth0.com',
     access_token_url='https://fadingminotaur5.auth0.com/oauth/token',
     authorize_url='https://fadingminotaur5.auth0.com/authorize',
@@ -57,6 +57,37 @@ def requires_auth(f):
         if 'profile' not in login_session:
             # Redirect to Login page here
             return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated
+
+def requires_token(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        access_token = request.headers.get('access_token')
+
+        if not access_token:
+            return make_response(
+                jsonify(
+                    status=403,
+                    result= {
+                        'message': 'No access token provided!'
+                    }
+                ), 403
+            )
+        
+        try:
+            token = session.query(Token).filter_by(token=access_token).one()
+            
+        except Exception:
+            return make_response(
+                jsonify(
+                    status=403,
+                    result= {
+                        'message': 'Unauthorized access token!'
+                    }
+                ), 403
+            )
+
         return f(*args, **kwargs)
     return decorated
 
@@ -95,6 +126,42 @@ def login():
         audience='https://fadingminotaur5.auth0.com/userinfo'
     )
 
+@app.route('/generate_new_token')
+def generate_token():
+
+    token = ''.join(random.choice(string.ascii_uppercase + string.digits)
+                    for x in range(32))
+
+    insertToken = Token(
+        name='first_token',
+        token=token
+    )
+
+    session.add(insertToken)
+    session.commit()
+    
+    try:
+        newToken = session.query(Token).filter_by(token=token).one()
+        return make_response(
+            jsonify(
+                status=200,
+                result = {
+                    'token': newToken.token
+                }
+            ), 200
+        )
+    except Exception:
+        return make_response(
+            jsonify(
+                status=500,
+                result = {
+                    'message': 'Something went wrong'
+                }
+            ), 500
+        )
+        
+    
+
 
 @app.route('/logout')
 def logout():
@@ -104,7 +171,7 @@ def logout():
     # Redirect user to logout endpoint
     params = {
         'returnTo': url_for(
-            'indexCategories', _external=True
+            'index', _external=True
         ),
         'client_id': 'GHFAORqpG5uLMAqqBPF1w4DxhUlaaBFq'
     }
@@ -158,16 +225,22 @@ def viewCategoriesJson():
 
 
 @app.route('/')
-def indexCategories():
-    categories = session.query(Category).all()
+@requires_token
+def index():
+    checkpoints = session.query(Checkpoint).all()
     if 'profile' in login_session:
         user = login_session['profile']
     else:
         user = False
-    return render_template(
-        'index.html',
-        categories=categories,
-        currentPage=request.path
+
+    return make_response(
+        jsonify(
+            status=200,
+            result = {
+                'checkpoint': [checkpoint.serialize for checkpoint in checkpoints],
+                'user': user
+            }
+        ), 200
     )
 
 
@@ -195,7 +268,7 @@ def createCategory():
         )
         session.add(newEntry)
         session.commit()
-        return redirect(url_for('indexCategories'))
+        return redirect(url_for('index'))
 
 
 @app.route('/category/update/<int:category_id>', methods=['GET', 'POST'])
@@ -213,7 +286,7 @@ def updateCategory(category_id):
         category.name = request.form['name']
         session.add(category)
         session.commit()
-        return redirect(url_for('indexCategories'))
+        return redirect(url_for('index'))
 
 
 @app.route('/category/delete/<int:category_id>', methods=['GET', 'POST'])
@@ -230,7 +303,7 @@ def deleteCategory(category_id):
     else:
         session.delete(category)
         session.commit()
-        return redirect(url_for('indexCategories'))
+        return redirect(url_for('index'))
 
 
 def isCategoryOwner(category_id):
