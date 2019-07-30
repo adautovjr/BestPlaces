@@ -1,87 +1,50 @@
-import React,{Component} from 'react'
-import {Map, InfoWindow, Marker, GoogleApiWrapper} from 'google-maps-react';
+import React,{Component} from 'react';
+import "./style.css";
  
-export class MapContainer extends Component {
+export class Map extends Component {
   state = {
-    markers: [],
-    showingInfoWindow: false,
-    activeMarker: {},
-    selectedPlace: {},
+    markers: []
   };
+
+  renderMap = () => {
+    loadScript("https://maps.googleapis.com/maps/api/js?key=AIzaSyAL39el3Xa4MZQIQ_l9XFe4BJd-PpiiRd0&callback=initMap");
+  }
 
   render() {
     return (
-      <Map 
-        google={this.props.google} 
-        zoom={16}
-        onClick={this.onMapClicked}
-        initialCenter={{
-            lat: -5.8335189,
-            lng: -35.2255331
-          }}
-        >
-        
-        {this.state.markers.map(
-          marker => (
-            <Marker onClick={this.onMarkerClick}
-                key={marker.id}
-                name={marker.name} 
-                position={marker.position} />
-          )
-        )}
- 
-        <InfoWindow onClose={this.onInfoWindowClose}
-            marker={this.state.activeMarker}
-            visible={this.state.showingInfoWindow}
-          >
-              <div>
-                <h1>{this.state.selectedPlace.name}</h1>
-              </div>
-        </InfoWindow>
-      </Map>
+      <div className="map-container">
+        <div id="map"></div>
+      </div>
     );
   }
 
-  checkMarkers() {
-    this.setState({markers: this.state.markers.filter(function(marker) { 
-      return marker.name !== undefined 
-    })});
+  componentDidMount() {
+    this.renderMap();
+    window.initMap = this.initMap;
   }
 
-  setInfoWindowVisible() {
-    
+  initMap = () => {
+    // The location of Uluru
+    var uluru = {lat: -25.344, lng: 131.036};
+    // The map, centered at Uluru
+    var map = new window.google.maps.Map(
+        document.getElementById('map'), {zoom: 4, center: uluru});
+    // The marker, positioned at Uluru
+    var marker = new window.google.maps.Marker({position: uluru, map: map});
+    this.state.markers.push(marker);
+    console.log(this.state.markers);
   }
-
-  onMarkerClick = (props, marker, e) =>
-    this.setState({
-      selectedPlace: props,
-      activeMarker: marker,
-      showingInfoWindow: true
-    }
-  );
-
-  onMapClicked = (props, meta, click) => {
-    this.checkMarkers();
-    
-    var min = 1;
-    var max = 100000;
-    var key = min + Math.random() * (max - min);
-    
-    var newMarker = {id: key, position:{lat: click.latLng.lat(), lng: click.latLng.lng()}};
-
-    this.state.markers.push(
-      newMarker
-    );
-
-    console.log('Markers:', this.state.markers);
-
-    this.forceUpdate();
-  };
-
 
 }
 
+function loadScript(url) {
+  var index = window.document.getElementsByTagName("script")[0];
+  var script = window.document.createElement("script")
+  script.src = url;
+  script.async = true;
+  script.defer = true;
+  index.parentNode.insertBefore(script, index);
+}
+
  
-export default GoogleApiWrapper({
-  apiKey: ('AIzaSyCPE_0srgytD-jZEv6S5R0xKiEDzYmqSxg')
-})(MapContainer)
+export default Map;
