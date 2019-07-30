@@ -1,6 +1,6 @@
 import React,{Component} from 'react';
 import "./style.css";
- 
+
 export class Map extends Component {
   state = {
     markers: []
@@ -27,13 +27,23 @@ export class Map extends Component {
     // The location of Uluru
     var uluru = {lat: -25.344, lng: 131.036};
     // The map, centered at Uluru
-    var map = new window.google.maps.Map(
+    window.map = new window.google.maps.Map(
         document.getElementById('map'), {zoom: 4, center: uluru});
     // The marker, positioned at Uluru
-    var marker = new window.google.maps.Marker({position: uluru, map: map});
+    var marker = new window.google.maps.Marker({position: uluru, map: window.map});
     this.state.markers.push(marker);
+    this.addListener();
     console.log(this.state.markers);
   }
+
+  addListener = () => {
+    window.google.maps.event.addListener(window.map, 'click', function(event){
+      var lat = event.latLng.lat();
+      var lng = event.latLng.lng();
+      new window.google.maps.Marker({position: {lat: lat, lng: lng}, map: window.map});
+    });
+  }
+
 
 }
 
@@ -46,5 +56,5 @@ function loadScript(url) {
   index.parentNode.insertBefore(script, index);
 }
 
- 
+
 export default Map;
