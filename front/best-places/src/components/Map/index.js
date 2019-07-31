@@ -2,7 +2,7 @@ import React,{Component} from 'react';
 import "./style.css";
 
 export class Map extends Component {
-  state = {
+  static state = {
     markers: []
   };
 
@@ -12,8 +12,13 @@ export class Map extends Component {
 
   render() {
     return (
-      <div className="map-container">
-        <div id="map"></div>
+      <div className="map-container row">
+        <div className="col-12 col-lg-3">
+          Alou
+        </div>
+        <div className="col-12 col-lg-9">
+          <div id="map"></div>
+        </div>
       </div>
     );
   }
@@ -21,6 +26,26 @@ export class Map extends Component {
   componentDidMount() {
     this.renderMap();
     window.initMap = this.initMap;
+    window.saveCheckpoint = this.saveCheckpoint;
+  }
+
+  saveCheckpoint = (name) => {
+    console.log("alou, "+name);
+  }
+
+  static addMarker = (position) => {
+    if (window.infowindow){
+      window.infowindow.close();
+    }
+    var marker = new window.google.maps.Marker({position: position, map: window.map});
+    Map.state.markers.push(marker);
+
+    window.infowindow = new window.google.maps.InfoWindow({
+      content: "Uluru"
+    });
+    window.infowindow.open(window.map, marker);
+
+    console.log("Markers:", Map.state.markers);
   }
 
   initMap = () => {
@@ -28,22 +53,19 @@ export class Map extends Component {
     var uluru = {lat: -25.344, lng: 131.036};
     // The map, centered at Uluru
     window.map = new window.google.maps.Map(
-        document.getElementById('map'), {zoom: 4, center: uluru});
-    // The marker, positioned at Uluru
-    var marker = new window.google.maps.Marker({position: uluru, map: window.map});
-    this.state.markers.push(marker);
+      document.getElementById('map'), {zoom: 4, center: uluru}
+    );
     this.addListener();
-    console.log(this.state.markers);
   }
+
 
   addListener = () => {
     window.google.maps.event.addListener(window.map, 'click', function(event){
       var lat = event.latLng.lat();
       var lng = event.latLng.lng();
-      new window.google.maps.Marker({position: {lat: lat, lng: lng}, map: window.map});
+      Map.addMarker({ lat: lat, lng: lng });
     });
   }
-
 
 }
 
