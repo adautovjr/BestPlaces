@@ -1,11 +1,13 @@
 from flask import Flask, render_template, request, redirect, make_response
 from flask import url_for, flash, jsonify, Response, session as login_session
+from flask_cors import CORS, cross_origin
 from models import Base, Checkpoint, User, Token
 from sqlalchemy import Column, ForeignKey, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy.inspection import inspect
 from sqlalchemy import create_engine
+import pprint
 import random
 import string
 from authlib.flask.client import OAuth
@@ -22,6 +24,8 @@ DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
 app = Flask(__name__)
+
+cors = CORS(app, resources={r"/*": {"origins": "*"}}, allow_headers='Content-Type')
 
 oauth = OAuth(app)
 
@@ -144,8 +148,7 @@ def generate_token():
         newToken = session.query(Token).filter_by(token=token).one()
         return make_response(
             jsonify(
-                status=200,
-                result = {
+                {
                     'token': newToken.token
                 }
             ), 200
@@ -153,8 +156,7 @@ def generate_token():
     except Exception:
         return make_response(
             jsonify(
-                status=500,
-                result = {
+                {
                     'message': 'Something went wrong'
                 }
             ), 500
@@ -211,33 +213,20 @@ def getUserId(email):
         return None
 
 
-# Categories Controllers
-@app.route('/categories/json')
-def viewCategoriesJson():
-    categories = session.query(Category).all()
-
-    return jsonify(
-        status=200,
-        result=[
-            category.serialize for category in categories
-        ]
-    )
-
-
-@app.route('/')
-@requires_token
-def index():
-    checkpoints = session.query(Checkpoint).all()
+# Checkpoints Controllers
+@app.route('/checkpoints/json')
+def viewCheckpointsJson():
     if 'profile' in login_session:
         user = login_session['profile']
     else:
         user = False
 
+    checkpoints = session.query(Checkpoint).all()
+
     return make_response(
         jsonify(
-            status=200,
-            result = {
-                'checkpoint': [checkpoint.serialize for checkpoint in checkpoints],
+            {
+                'checkpoints': [checkpoint.serialize for checkpoint in checkpoints],
                 'user': user
             }
         ), 200
@@ -256,19 +245,34 @@ def viewCategory(category_id):
     )
 
 
-@app.route('/category/create', methods=['GET', 'POST'])
-@requires_auth
-def createCategory():
-    if request.method == 'GET':
-        return render_template('category/create.html')
-    else:
-        newEntry = Category(
-            name=request.form['name'],
-            user_id=login_session['profile']['user_id']
+@app.route('/checkpoints/create', methods=['POST'])
+@cross_origin(origin='*',headers=['Content-Type','Authorization'])
+def createCheckpoint():
+    if request.method == 'POST':
+        newEntry = Checkpoint(
+            name=request.args['name'],
+            coordinates= request.args['coordinates'],
+            address= request.args['address'],
+            description= request.args['description'],
+            user_id=1
         )
         session.add(newEntry)
         session.commit()
-        return redirect(url_for('index'))
+        return make_response(
+            jsonify(
+                {
+                    'message': 'Checkpoint saved successfully'
+                }
+            )
+        , 200)
+    else:
+        return make_response(
+            jsonify(
+                {
+                    'message': 'Method not Allowed'
+                }
+            ), 405
+        )
 
 
 @app.route('/category/update/<int:category_id>', methods=['GET', 'POST'])
