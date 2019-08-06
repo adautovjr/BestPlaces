@@ -25,7 +25,9 @@ session = DBSession()
 
 app = Flask(__name__)
 
-cors = CORS(app, resources={r"/*": {"origins": "*"}}, allow_headers='Content-Type')
+cors = CORS(app, resources={r"/": {"origins": "*"}})
+
+app.config['CORS_HEADERS'] = 'Content-Type'
 
 oauth = OAuth(app)
 
@@ -50,9 +52,6 @@ def userLoggedIn():
         return True
     else:
         return False
-
-
-app.jinja_env.globals.update(userLoggedIn=userLoggedIn)
 
 
 def requires_auth(f):
@@ -117,8 +116,6 @@ def callback_handling():
         'email': userinfo['email'],
         'picture': userinfo['picture']
     }
-
-    app.jinja_env.globals.update(user=login_session['profile'])
 
     return redirect('/')
 
@@ -215,6 +212,7 @@ def getUserId(email):
 
 # Checkpoints Controllers
 @app.route('/checkpoints/json')
+@cross_origin(origin='*',headers=['Content-Type','Authorization'])
 def viewCheckpointsJson():
     if 'profile' in login_session:
         user = login_session['profile']
@@ -232,47 +230,38 @@ def viewCheckpointsJson():
         ), 200
     )
 
-
-@app.route('/category/<int:category_id>/')
-def viewCategory(category_id):
-    if category_id:
-        category = session.query(Category).filter_by(id=category_id).one()
-        items = session.query(Item).filter_by(category_id=category_id)
-    return render_template(
-        'category/view.html',
-        category=category,
-        items=items
-    )
-
-
 @app.route('/checkpoints/create', methods=['POST'])
 @cross_origin(origin='*',headers=['Content-Type','Authorization'])
 def createCheckpoint():
     if request.method == 'POST':
+        json = request.get_json(force=True)
+        
         newEntry = Checkpoint(
-            name=request.args['name'],
-            coordinates= request.args['coordinates'],
-            address= request.args['address'],
-            description= request.args['description'],
+            name=json["place"]['name'],
+            coordinates=json["place"]['position'],
+            address=json["place"]['address'],
+            description=json["place"]['description'],
             user_id=1
         )
         session.add(newEntry)
         session.commit()
-        return make_response(
+        resp = make_response(
             jsonify(
                 {
                     'message': 'Checkpoint saved successfully'
                 }
             )
         , 200)
+        return resp
     else:
-        return make_response(
+        resp = make_response(
             jsonify(
                 {
                     'message': 'Method not Allowed'
                 }
             ), 405
         )
+        return resp
 
 
 @app.route('/category/update/<int:category_id>', methods=['GET', 'POST'])
@@ -320,95 +309,6 @@ def isCategoryOwner(category_id):
         return True
     else:
         return False
-
-
-app.jinja_env.globals.update(isCategoryOwner=isCategoryOwner)
-
-
-# Items Controllers
-@app.route('/item/<int:category_id>/json')
-def viewItemsJson(category_id):
-    items = session.query(Item).filter_by(category_id=category_id)
-
-    return jsonify(status=200, result=[item.serialize for item in items])
-
-
-@app.route('/item/<int:item_id>/')
-def viewItem(item_id):
-    if item_id:
-        item = session.query(Item).filter_by(id=item_id).one()
-    return render_template('item/view.html', item=item)
-
-
-@app.route('/item/create/<int:category_id>', methods=['GET', 'POST'])
-@requires_auth
-def createItem(category_id):
-    if not isCategoryOwner(category_id):
-        return redirect(url_for('unauthorize'))
-
-    if request.method == 'GET':
-        category = session.query(Category).filter_by(id=category_id).one()
-        return render_template('item/create.html', category=category)
-    else:
-        newEntry = Item(
-            name=request.form['name'],
-            description=request.form['description'],
-            category_id=category_id,
-            user_id=login_session['profile']['user_id']
-        )
-        session.add(newEntry)
-        session.commit()
-        return redirect(url_for('viewCategory', category_id=category_id))
-
-
-@app.route('/item/update/<int:item_id>', methods=['GET', 'POST'])
-@requires_auth
-def updateItem(item_id):
-    if not isItemOwner(item_id):
-        return redirect(url_for('unauthorize'))
-
-    item = session.query(Item).filter_by(id=item_id).one()
-
-    if request.method == 'GET':
-
-        return render_template('item/update.html', item=item)
-    else:
-        item.name = request.form['name']
-        item.description = request.form['description']
-        session.add(item)
-        session.commit()
-        return redirect(url_for('viewCategory', category_id=item.category_id))
-
-
-@app.route('/item/delete/<int:item_id>', methods=['GET', 'POST'])
-@requires_auth
-def deleteItem(item_id):
-    if not isItemOwner(item_id):
-        return redirect(url_for('unauthorize'))
-
-    item = session.query(Item).filter_by(id=item_id).one()
-    if request.method == 'GET':
-
-        return render_template('item/delete.html', item=item)
-    else:
-        session.delete(item)
-        session.commit()
-        return redirect(url_for('viewCategory', category_id=item.category_id))
-
-
-def isItemOwner(item_id):
-    item = session.query(Item).filter_by(id=item_id).one()
-
-    if not userLoggedIn():
-        return False
-
-    if login_session['profile']['user_id'] == item.user_id:
-        return True
-    else:
-        return False
-
-
-app.jinja_env.globals.update(isItemOwner=isItemOwner)
 
 
 if __name__ == '__main__':

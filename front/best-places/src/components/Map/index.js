@@ -53,30 +53,28 @@ export class Map extends Component {
     this.state.markers.push(newMarker);
   }
 
-  saveCheckpoint = (name, position) => {
+  saveCheckpoint = (name, position, description, marker) => {
     window.infowindow.close();
     window.infowindow.setContent("");
-    var address = this.getAddress(position).then(data => { return data });
-    var url = "http://localhost:5000/checkpoints/create";
-    var place = {
-      name: name,
-      position: position,
-      address: "teste",
-      description: "Teste"
-    };
-    var headers = {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*'
-    };
-    axios.post(url, { place },  {
-      headers: headers
-    }).then(res => {
-      if (res.status === 200) {
-        alert(res.data.message);
-      } else {
-        alert("Paw");
-      }
+    console.log(marker);
+    this.getAddress(position).then(address => { 
+      var url = "http://localhost:5000/checkpoints/create";
+      var place = {
+        name: name,
+        position: position,
+        address: address,
+        description: description
+      };
+      
+      axios.post(url, { place },  { headers: { 'Content-Type': 'application/json' } }).then(res => {
+        if (res.status === 200) {
+          alert(res.data.message);
+        } else {
+          alert("Ocorreu um erro ao salvar o ponto de interesse");
+        }
+      });
     });
+    
   }
 
   getAddress = (position) => {
@@ -102,7 +100,6 @@ export class Map extends Component {
 
   initMap = () => {
     // The location of Uluru
-    var australia = {lat: -25.344, lng: 131.036};
     var brasil = {lat: -13.702797, lng:-69.6865109};
     
     window.map = new window.google.maps.Map(
@@ -127,11 +124,10 @@ export class Map extends Component {
           var checkpoints = res.data.checkpoints;
           // eslint-disable-next-line array-callback-return
           checkpoints.map((checkpoint) => {
-            this.pushMarker(checkpoint);
             var position = checkpoint.coordinates.split(',');
-            console.log(this.state.markers);
             this.addMarker( {lat: parseFloat(position[0]),lng: parseFloat(position[1])} , checkpoint);
           });
+          console.log(this.state.markers);
         } else {
           alert("Oops.. We've had problems looking for some data.");
         }
@@ -141,17 +137,20 @@ export class Map extends Component {
     }
   }
 
+  getInfoWindowTemplate = (lat, lng) => {
+    return "" +
+    "<input type='text' data-position='"+lat+","+lng+"' id='marker-input' />"+
+    "<input value='Salvar' type='button' onclick='window.saveCheckpoint(document.getElementById(&quot;marker-input&quot;).value, document.getElementById(&quot;marker-input&quot;).dataset.position)'/>"
+  }
+
   addMarker = (position, content=false) => {
     window.infowindow.close();
 
     var infoWindowContent;
-    if (content){
-      infoWindowContent = "Olá "+content.name;
-    } else {
-      infoWindowContent = "<input type='text' data-position='"+position.lat+","+position.lng+"' id='marker-input' />"+
-      "<input value='Salvar' type='button' onclick='window.saveCheckpoint(document.getElementById(&quot;marker-input&quot;).value, document.getElementById(&quot;marker-input&quot;).dataset.position)'/>";
+    if (!content){
+      infoWindowContent = this.getInfoWindowTemplate(position.lat, position.lng);
+      window.infowindow.setContent(infoWindowContent);
     }
-    window.infowindow.setContent(infoWindowContent);
 
     var newMarker = new window.google.maps.Marker({position: position, map: window.map});
 
@@ -161,14 +160,21 @@ export class Map extends Component {
     
     if (!content){
       window.infowindow.open(window.map, newMarker);
+    } else {
+      // Adds marker.id so we can use that to get info from that place
+      newMarker.content = content;
     }
 
-    // window.pushMarker(newMarker);
+    this.pushMarker(newMarker);
+    
   }
 
   markerClicked = (marker) => {
     window.infowindow.setContent("Loading data....");
     window.infowindow.open(window.map, marker);
+    if (marker.content) {
+      window.infowindow.setContent("This is "+marker.content.name);
+    }
   }
 
   addMapListener = () => {
