@@ -234,24 +234,22 @@ def viewCheckpointsJson():
 @cross_origin(origin='*',headers=['Content-Type','Authorization'])
 def createCheckpoint():
     if request.method == 'POST':
-        json = request.get_json(force=True)
+        entry = request.get_json(force=True)
         
         newEntry = Checkpoint(
-            name=json["place"]['name'],
-            coordinates=json["place"]['position'],
-            address=json["place"]['address'],
-            description=json["place"]['description'],
+            name=entry["place"]['name'],
+            coordinates=entry["place"]['position'],
+            address=entry["place"]['address'],
+            description=entry["place"]['description'],
             user_id=1
         )
         session.add(newEntry)
         session.commit()
         resp = make_response(
             jsonify(
-                {
-                    'message': 'Checkpoint saved successfully'
-                }
-            )
-        , 200)
+                entry
+            ), 201
+        )
         return resp
     else:
         resp = make_response(

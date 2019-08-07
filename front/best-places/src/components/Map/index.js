@@ -15,24 +15,16 @@ export class Map extends Component {
     return (
       <div className="map-container row">
         <div className="col-12 col-lg-3">
-          <div className="row">
-            <div className="col-12 search-box-container">
-              <input type="search" className="search-box" />
-            </div>
-            <div className="col-12">
-              <input type="submit" onClick={this.saveCheckpoints} />
-            </div>
-            <div className="markers-list">
-              {this.state.markers.map( (marker) => {
+            <div className="markers-list row">
+              {this.state.markers.map( (marker, key) => {
                 return (
-                  <div>
-                    <h1>{marker.name}</h1>
+                  <div className="col-12" key={marker.content ? marker.content.id : key}>
+                    <h1>{marker.content ? marker.content.name : "Unsaved"}</h1>
                   </div>
                 )
               })}
             </div>
           </div>
-        </div>
         <div className="col-12 col-lg-9">
           <div id="map"></div>
         </div>
@@ -43,21 +35,32 @@ export class Map extends Component {
   componentDidMount() {
     this.renderMap();
     window.initMap = this.initMap;
-    window.pushMarker = this.pushMarker;
     window.addMarker = this.addMarker;
     window.saveCheckpoint = this.saveCheckpoint;
     window.markerClicked = this.markerClicked;
   }
 
   pushMarker = (newMarker) => {
-    this.state.markers.push(newMarker);
+    this.setState({
+      markers: [...this.state.markers, newMarker]
+    });
   }
 
-  saveCheckpoint = (name, position, description, marker) => {
+  updateMarker = (id, content) => {
+    // const element = this.state.markers.filter(res => res.id === id);
+    let markers = this.state.markers;
+    markers.map(marker => {
+      if(marker.id === id){
+        marker.content = content;
+      }
+    });
+    this.setState({ ...markers });
+  }
+
+  saveCheckpoint = async (name, position, description, markerId) => {
     window.infowindow.close();
     window.infowindow.setContent("");
-    console.log(marker);
-    this.getAddress(position).then(address => { 
+    await this.getAddress(position).then(address => { 
       var url = "http://localhost:5000/checkpoints/create";
       var place = {
         name: name,
@@ -67,8 +70,9 @@ export class Map extends Component {
       };
       
       axios.post(url, { place },  { headers: { 'Content-Type': 'application/json' } }).then(res => {
-        if (res.status === 200) {
-          alert(res.data.message);
+        if (res.status === 201) {
+          alert("Salvo com sucesso");
+          this.updateMarker(markerId, res.data.place);
         } else {
           alert("Ocorreu um erro ao salvar o ponto de interesse");
         }
@@ -100,10 +104,11 @@ export class Map extends Component {
 
   initMap = () => {
     // The location of Uluru
-    var brasil = {lat: -13.702797, lng:-69.6865109};
+    // var brasil = {lat: -13.702797, lng:-69.6865109};
+    var natal = {lat:-5.8088796, lng:-35.2299466};
     
     window.map = new window.google.maps.Map(
-      document.getElementById('map'), {zoom: 4, center: brasil}
+      document.getElementById('map'), {zoom: 13, center: natal}
     );
 
     window.infowindow = new window.google.maps.InfoWindow({
@@ -137,18 +142,30 @@ export class Map extends Component {
     }
   }
 
-  getInfoWindowTemplate = (lat, lng) => {
+  getInfoWindowTemplate = (lat, lng, id) => {
     return "" +
-    "<input type='text' data-position='"+lat+","+lng+"' id='marker-input' />"+
-    "<input value='Salvar' type='button' onclick='window.saveCheckpoint(document.getElementById(&quot;marker-input&quot;).value, document.getElementById(&quot;marker-input&quot;).dataset.position)'/>"
+    "<input type='text' data-position='"+lat+","+lng+"' data-id='"+id+"' id='marker-input' />"+
+    "<input type='text' id='marker-description' />"+
+    "<input value='Salvar' type='button' onclick='window.saveCheckpoint(document.getElementById(&quot;marker-input&quot;).value, document.getElementById(&quot;marker-input&quot;).dataset.position, document.getElementById(&quot;marker-description&quot;).value, document.getElementById(&quot;marker-input&quot;).dataset.id)'/>"
+  }
+
+  makeid = (length) => {
+    var result = '';
+    var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    var charactersLength = characters.length;
+    for ( var i = 0; i < length; i++ ) {
+       result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    return result;
   }
 
   addMarker = (position, content=false) => {
     window.infowindow.close();
 
-    var infoWindowContent;
+    var infoWindowContent, tempId;
     if (!content){
-      infoWindowContent = this.getInfoWindowTemplate(position.lat, position.lng);
+      tempId = this.makeid(10);
+      infoWindowContent = this.getInfoWindowTemplate(position.lat, position.lng, tempId);
       window.infowindow.setContent(infoWindowContent);
     }
 
@@ -160,9 +177,11 @@ export class Map extends Component {
     
     if (!content){
       window.infowindow.open(window.map, newMarker);
+      newMarker.id = tempId;
     } else {
       // Adds marker.id so we can use that to get info from that place
       newMarker.content = content;
+      newMarker.id = content.id;
     }
 
     this.pushMarker(newMarker);
