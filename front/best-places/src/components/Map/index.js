@@ -15,6 +15,7 @@ export class Map extends Component {
     return (
       <div className="map-container row">
         <div className="col-12 col-lg-3">
+            <input type="text" placeholder="Filtrar" onKeyUp={(e) => this.filterMarkers(e.target.value)}/>
             <div className="markers-list row">
               {this.state.markers.map( (marker, key) => {
                 return (
@@ -38,6 +39,11 @@ export class Map extends Component {
     window.addMarker = this.addMarker;
     window.saveCheckpoint = this.saveCheckpoint;
     window.markerClicked = this.markerClicked;
+    window.filterMarkers = this.filterMarkers;
+  }
+
+  filterMarkers = (input) => {
+    console.log(input);
   }
 
   pushMarker = (newMarker) => {
@@ -47,7 +53,6 @@ export class Map extends Component {
   }
 
   updateMarker = (id, content) => {
-    // const element = this.state.markers.filter(res => res.id === id);
     let markers = this.state.markers;
     markers.map(marker => {
       if(marker.id === id){
@@ -55,6 +60,7 @@ export class Map extends Component {
       }
     });
     this.setState({ ...markers });
+    console.log(this.state.markers);
   }
 
   saveCheckpoint = async (name, position, description, markerId) => {
@@ -146,7 +152,7 @@ export class Map extends Component {
     return "" +
     "<input type='text' data-position='"+lat+","+lng+"' data-id='"+id+"' id='marker-input' />"+
     "<input type='text' id='marker-description' />"+
-    "<input value='Salvar' class='alou' type='button' onclick='window.saveCheckpoint(document.getElementById(&quot;marker-input&quot;).value, document.getElementById(&quot;marker-input&quot;).dataset.position, document.getElementById(&quot;marker-description&quot;).value, document.getElementById(&quot;marker-input&quot;).dataset.id)'/>"
+    "<input value='Salvar' type='button' onclick='window.saveCheckpoint(document.getElementById(&quot;marker-input&quot;).value, document.getElementById(&quot;marker-input&quot;).dataset.position, document.getElementById(&quot;marker-description&quot;).value, document.getElementById(&quot;marker-input&quot;).dataset.id)'/>"
   }
 
   makeid = (length) => {
@@ -193,6 +199,10 @@ export class Map extends Component {
     window.infowindow.open(window.map, marker);
     if (marker.content) {
       window.infowindow.setContent("This is "+marker.content.name);
+    } else {
+      console.log(marker);
+      console.log(marker.position);
+      window.infowindow.setContent(this.getInfoWindowTemplate(marker.position.lat(), marker.position.lng(), marker.id));
     }
   }
 

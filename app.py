@@ -214,52 +214,72 @@ def getUserId(email):
 @app.route('/checkpoints/json')
 @cross_origin(origin='*',headers=['Content-Type','Authorization'])
 def viewCheckpointsJson():
-    if 'profile' in login_session:
-        user = login_session['profile']
-    else:
-        user = False
-
-    checkpoints = session.query(Checkpoint).all()
-
-    return make_response(
-        jsonify(
-            {
-                'checkpoints': [checkpoint.serialize for checkpoint in checkpoints],
-                'user': user
-            }
-        ), 200
-    )
+    try:
+        if 'profile' in login_session:
+            user = login_session['profile']
+        else:
+            user = False
+    
+        checkpoints = session.query(Checkpoint).all()
+    
+        return make_response(
+            jsonify(
+                {
+                    'checkpoints': [checkpoint.serialize for checkpoint in checkpoints],
+                    'user': user
+                }
+            ), 200
+        )
+    except Exception:
+        return make_response(
+            jsonify(
+                {
+                    "message": "Bad request!" 
+                }
+            ), 400
+        )
 
 @app.route('/checkpoints/create', methods=['POST'])
 @cross_origin(origin='*',headers=['Content-Type','Authorization'])
 def createCheckpoint():
     if request.method == 'POST':
-        entry = request.get_json(force=True)
+        try:
+            entry = request.get_json(force=True)
         
-        newEntry = Checkpoint(
-            name=entry["place"]['name'],
-            coordinates=entry["place"]['position'],
-            address=entry["place"]['address'],
-            description=entry["place"]['description'],
-            user_id=1
-        )
-        session.add(newEntry)
-        session.commit()
-        resp = make_response(
-            jsonify(
-                entry
-            ), 201
-        )
-        return resp
+            newEntry = Checkpoint(
+                name=entry["place"]['name'],
+                coordinates=entry["place"]['position'],
+                address=entry["place"]['address'],
+                description=entry["place"]['description'],
+                user_id=1
+            )
+            session.add(newEntry)
+            session.flush()
+            entry['place']['id'] = newEntry.id
+            session.commit()
+
+            return make_response(
+                jsonify(
+                    entry
+                ), 201
+            )
+        except Exception:
+            return make_response(
+                jsonify(
+                    {
+                        "message": "Bad request!" 
+                    }
+                ), 400
+            )
+            pass
     else:
-        resp = make_response(
+        return make_response(
             jsonify(
                 {
                     'message': 'Method not Allowed'
                 }
             ), 405
         )
-        return resp
 
 
 @app.route('/category/update/<int:category_id>', methods=['GET', 'POST'])
