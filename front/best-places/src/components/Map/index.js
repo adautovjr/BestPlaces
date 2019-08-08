@@ -146,7 +146,7 @@ export class Map extends Component {
     return "" +
     "<input type='text' data-position='"+lat+","+lng+"' data-id='"+id+"' id='marker-input' />"+
     "<input type='text' id='marker-description' />"+
-    "<input value='Salvar' type='button' onclick='window.saveCheckpoint(document.getElementById(&quot;marker-input&quot;).value, document.getElementById(&quot;marker-input&quot;).dataset.position, document.getElementById(&quot;marker-description&quot;).value, document.getElementById(&quot;marker-input&quot;).dataset.id)'/>"
+    "<input value='Salvar' class='alou' type='button' onclick='window.saveCheckpoint(document.getElementById(&quot;marker-input&quot;).value, document.getElementById(&quot;marker-input&quot;).dataset.position, document.getElementById(&quot;marker-description&quot;).value, document.getElementById(&quot;marker-input&quot;).dataset.id)'/>"
   }
 
   makeid = (length) => {
