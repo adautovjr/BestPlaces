@@ -1,10 +1,15 @@
 import React,{Component} from 'react';
 import axios from 'axios';
+import Highlighter from "react-highlight-words";
+// import {Accordion, Button, Card} from 'react-bootstrap';
 import "./style.css";
+import { ModalManager} from 'react-dynamic-modal';
+import DetailsModal from '../DetailsModal';
 
 export class Map extends Component {
   state = {
-    markers: []
+    markers: [],
+    filterTerm: ""
   };
 
   renderMap = () => {
@@ -13,21 +18,57 @@ export class Map extends Component {
 
   render() {
     return (
-      <div className="map-container row">
-        <div className="col-12 col-lg-3">
-            <input type="text" placeholder="Filtrar" onKeyUp={(e) => this.filterMarkers(e.target.value)}/>
-            <div className="markers-list row">
-              {this.state.markers.map( (marker, key) => {
-                return (
-                  <div className="col-12" key={marker.content ? marker.content.id : key}>
-                    <h1>{marker.content ? marker.content.name : "Unsaved"}</h1>
-                  </div>
-                )
-              })}
+      <div className="map-container">
+        <div className="row no-gutters">
+          <div className="col-12 col-lg-3">
+              <div className="container-fluid details-container">
+                <input className="card search-box" type="text" placeholder="Filtrar" onKeyUp={(e) => this.setState({filterTerm: e.target.value})}/>
+                <div className="markers-list row">
+                  {/* eslint-disable-next-line array-callback-return */}
+                  {this.state.markers.map( (marker, key) => {
+                    
+                    var name = marker.content ? marker.content.name : "Unsaved";
+                    var desc = marker.content ? marker.content.description : "Description here";
+                    var id = marker.content ? marker.content.id : key;
+                    
+                    if ( 
+                      name.indexOf(this.state.filterTerm) !== -1 || 
+                      desc.indexOf(this.state.filterTerm) !== -1 
+                    ){
+                      marker.setVisible(true);
+                        return (
+                          <div className="col-12 mb-2" key={id}>
+                            <div className="card">
+                              <div className="card-body">
+                                <div className="card-title">
+                                  <Highlighter
+                                    highlightClassName="highlighted"
+                                    searchWords={[this.state.filterTerm]}
+                                    autoEscape={true}
+                                    textToHighlight={name}
+                                  />
+                                </div>
+                                <Highlighter
+                                  className="card-subtitle text-muted"
+                                  highlightClassName="highlighted"
+                                  searchWords={[this.state.filterTerm]}
+                                  autoEscape={true}
+                                  textToHighlight={desc}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        )
+                    } else {
+                      marker.setVisible(false);
+                    }
+                  })}
+                </div>
+              </div>
             </div>
+          <div className="col-12 col-lg-9">
+            <div id="map"></div>
           </div>
-        <div className="col-12 col-lg-9">
-          <div id="map"></div>
         </div>
       </div>
     );
@@ -40,6 +81,11 @@ export class Map extends Component {
     window.saveCheckpoint = this.saveCheckpoint;
     window.markerClicked = this.markerClicked;
     window.filterMarkers = this.filterMarkers;
+    window.openModal = this.openModal;
+  }
+
+  openModal = (input) => {
+    ModalManager.open(<DetailsModal text={input} onRequestClose={() => true}/>);
   }
 
   filterMarkers = (input) => {
@@ -54,6 +100,7 @@ export class Map extends Component {
 
   updateMarker = (id, content) => {
     let markers = this.state.markers;
+    // eslint-disable-next-line array-callback-return
     markers.map(marker => {
       if(marker.id === id){
         marker.content = content;
@@ -148,11 +195,26 @@ export class Map extends Component {
     }
   }
 
-  getInfoWindowTemplate = (lat, lng, id) => {
+  getInfoWindowInputTemplate = (lat, lng, id) => {
     return "" +
     "<input type='text' data-position='"+lat+","+lng+"' data-id='"+id+"' id='marker-input' />"+
     "<input type='text' id='marker-description' />"+
     "<input value='Salvar' type='button' onclick='window.saveCheckpoint(document.getElementById(&quot;marker-input&quot;).value, document.getElementById(&quot;marker-input&quot;).dataset.position, document.getElementById(&quot;marker-description&quot;).value, document.getElementById(&quot;marker-input&quot;).dataset.id)'/>"
+  }
+
+  getInfoWindowDetailsTemplate = (content) => {
+    return "" +
+    "<div style='width: 300px; padding: 30px'>" +
+      "<h1 style='text-align: center;'>" +
+        content.name +
+      "</h1>" +
+      "<p style='color: #6c757d;'>" +
+        content.description +
+      "</p>" +
+      "<button onclick='window.openModal(&quot;"+content.coordinates+"&quot;)'>" +
+        "Saiba mais" +
+      "</button>" +
+    "</div>"
   }
 
   makeid = (length) => {
@@ -171,7 +233,7 @@ export class Map extends Component {
     var infoWindowContent, tempId;
     if (!content){
       tempId = this.makeid(10);
-      infoWindowContent = this.getInfoWindowTemplate(position.lat, position.lng, tempId);
+      infoWindowContent = this.getInfoWindowInputTemplate(position.lat, position.lng, tempId);
       window.infowindow.setContent(infoWindowContent);
     }
 
@@ -198,11 +260,11 @@ export class Map extends Component {
     window.infowindow.setContent("Loading data....");
     window.infowindow.open(window.map, marker);
     if (marker.content) {
-      window.infowindow.setContent("This is "+marker.content.name);
+      window.infowindow.setContent(this.getInfoWindowDetailsTemplate(marker.content));
     } else {
       console.log(marker);
       console.log(marker.position);
-      window.infowindow.setContent(this.getInfoWindowTemplate(marker.position.lat(), marker.position.lng(), marker.id));
+      window.infowindow.setContent(this.getInfoWindowInputTemplate(marker.position.lat(), marker.position.lng(), marker.id));
     }
   }
 
