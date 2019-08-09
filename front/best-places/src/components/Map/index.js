@@ -79,6 +79,7 @@ export class Map extends Component {
     window.initMap = this.initMap;
     window.addMarker = this.addMarker;
     window.saveCheckpoint = this.saveCheckpoint;
+    window.deleteCheckpoint = this.deleteCheckpoint;
     window.markerClicked = this.markerClicked;
     window.filterMarkers = this.filterMarkers;
     window.openModal = this.openModal;
@@ -132,6 +133,38 @@ export class Map extends Component {
       });
     });
     
+  }
+
+  deleteMarker = (markerId) => {
+    let markers = this.state.markers;
+    
+    // eslint-disable-next-line array-callback-return
+    markers.filter(marker => {
+      if(""+marker.content.id === markerId){
+        marker.setMap(null);
+      } else {
+        return true;
+      }
+    });
+    console.log("markers", markers);
+    
+    this.setState({ markers });
+    console.log("state", this.state.markers);
+  }
+
+  deleteCheckpoint = (markerId) => {
+    console.log("Delete", markerId);
+    this.deleteMarker(markerId);
+    return;
+    var url = "http://localhost:5000/checkpoints/delete";
+    
+    axios.post(url, { markerId },  { headers: { 'Content-Type': 'application/json' } }).then(res => {
+      if (res.status === 201) {
+        alert("Deletado!");
+      } else {
+        alert("Ocorreu um erro ao deletar o ponto de interesse");
+      }
+    });
   }
 
   getAddress = (position) => {
@@ -213,6 +246,9 @@ export class Map extends Component {
       "</p>" +
       "<button onclick='window.openModal(&quot;"+content.coordinates+"&quot;)'>" +
         "Saiba mais" +
+      "</button>" +
+      "<button onclick='window.deleteCheckpoint(&quot;"+content.id+"&quot;)'>" +
+        "Delete" +
       "</button>" +
     "</div>"
   }
