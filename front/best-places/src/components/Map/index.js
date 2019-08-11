@@ -25,19 +25,19 @@ export class Map extends Component {
                 <input className="card search-box" type="text" placeholder="Filtrar" onKeyUp={(e) => this.setState({filterTerm: e.target.value})}/>
                 <div className="markers-list row">
                   {/* eslint-disable-next-line array-callback-return */}
-                  {this.state.markers.map( (marker, key) => {
+                  {this.state.markers.map( (marker) => {
                     
                     var name = marker.content ? marker.content.name : "Unsaved";
                     var desc = marker.content ? marker.content.description : "Description here";
-                    var id = marker.content ? marker.content.id : key;
+                    var id = marker.content ? marker.content.id : marker.id;
                     
                     if ( 
-                      name.indexOf(this.state.filterTerm) !== -1 || 
-                      desc.indexOf(this.state.filterTerm) !== -1 
+                      name.toLowerCase().indexOf(this.state.filterTerm.toLowerCase()) !== -1 || 
+                      desc.toLowerCase().indexOf(this.state.filterTerm.toLowerCase()) !== -1 
                     ){
                       marker.setVisible(true);
                         return (
-                          <div className="col-12 mb-2" key={id}>
+                          <div onClick={this.cardClicked.bind(this, id)} className="col-12 mb-2" key={id}>
                             <div className="card">
                               <div className="card-body">
                                 <div className="card-title">
@@ -48,13 +48,18 @@ export class Map extends Component {
                                     textToHighlight={name}
                                   />
                                 </div>
-                                <Highlighter
-                                  className="card-subtitle text-muted"
-                                  highlightClassName="highlighted"
-                                  searchWords={[this.state.filterTerm]}
-                                  autoEscape={true}
-                                  textToHighlight={desc}
-                                />
+                                <div className="card-subtitle-container mb-3">
+                                  <Highlighter
+                                    className="card-subtitle text-muted"
+                                    highlightClassName="highlighted"
+                                    searchWords={[this.state.filterTerm]}
+                                    autoEscape={true}
+                                    textToHighlight={desc}
+                                  />
+                                </div>
+                                <div className="btn btn-success" onClick={this.openModal.bind(this, marker.content ? marker.content.coordinates : undefined)}>
+                                  Saiba mais
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -85,12 +90,25 @@ export class Map extends Component {
     window.openModal = this.openModal;
   }
 
-  openModal = (input) => {
-    ModalManager.open(<DetailsModal text={input} onRequestClose={() => true}/>);
+  cardClicked = (id) => {
+    // eslint-disable-next-line array-callback-return
+    let marker = this.state.markers.find(marker => {
+      console.log("marker.id", marker.id);
+      console.log("id", id);
+      return marker.id === id;
+    });
+    console.log(marker);
+    window.map.setCenter({lat:marker.position.lat(), lng:marker.position.lng()});
+    if (marker.content) {
+      window.infowindow.setContent(this.getInfoWindowDetailsTemplate(marker.content));
+    } else {
+      window.infowindow.setContent(this.getInfoWindowInputTemplate(marker.position.lat(), marker.position.lng(), marker.id));
+    }
+    window.infowindow.open(window.map, marker);
   }
 
-  filterMarkers = (input) => {
-    console.log(input);
+  openModal = (input) => {
+    ModalManager.open(<DetailsModal text={input} onRequestClose={() => true}/>);
   }
 
   pushMarker = (newMarker) => {
@@ -139,31 +157,42 @@ export class Map extends Component {
     let markers = this.state.markers;
     
     // eslint-disable-next-line array-callback-return
-    markers.filter(marker => {
-      if(""+marker.content.id === markerId){
+    markers = this.state.markers.filter(marker => {
+      if (""+marker.content.id === markerId) {
         marker.setMap(null);
-      } else {
-        return true;
       }
+      return ""+marker.content.id !== markerId;
     });
-    console.log("markers", markers);
-    
+
     this.setState({ markers });
-    console.log("state", this.state.markers);
   }
 
   deleteCheckpoint = (markerId) => {
     console.log("Delete", markerId);
-    this.deleteMarker(markerId);
-    return;
     var url = "http://localhost:5000/checkpoints/delete";
     
-    axios.post(url, { markerId },  { headers: { 'Content-Type': 'application/json' } }).then(res => {
-      if (res.status === 201) {
-        alert("Deletado!");
+    axios.post(url, { id: markerId },  { headers: { 'Content-Type': 'application/json' } }).then(res => {
+      if (res.status === 200) {
+        this.deleteMarker(markerId);
+        alert(res.data.message);
       } else {
         alert("Ocorreu um erro ao deletar o ponto de interesse");
+        console.log(res.data.error);
       }
+    }).catch(function (error) {
+      if (error.response) {
+        // Request made and server responded
+        console.log(error.response.data);
+        console.log(error.response.status);
+        console.log(error.response.headers);
+      } else if (error.request) {
+        // The request was made but no response was received
+        console.log(error.request);
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        console.log('Error', error.message);
+      }
+  
     });
   }
 
@@ -289,6 +318,7 @@ export class Map extends Component {
     }
 
     this.pushMarker(newMarker);
+    console.log(this.state.markers);
     
   }
 

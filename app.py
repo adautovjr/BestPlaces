@@ -300,21 +300,43 @@ def updateCategory(category_id):
         return redirect(url_for('index'))
 
 
-@app.route('/category/delete/<int:category_id>', methods=['GET', 'POST'])
-@requires_auth
-def deleteCategory(category_id):
-    if not isCategoryOwner(category_id):
-        return redirect(url_for('unauthorize'))
+@app.route('/checkpoints/delete', methods=['POST'])
+@cross_origin(origin='*',headers=['Content-Type','Authorization'])
+def deleteCheckpoint():
+    if request.method == 'POST':
+        try:
+            entry = request.get_json(force=True)
+        
+            checkpoint = session.query(Checkpoint).filter_by(id=entry['id']).one()
 
-    category = session.query(Category).filter_by(id=category_id).one()
+            session.delete(checkpoint)
+            session.commit()
 
-    if request.method == 'GET':
-
-        return render_template('category/delete.html', category=category)
+            return make_response(
+                jsonify(
+                    {
+                        "message": "Successfully deleted!" 
+                    }
+                ), 200
+            )
+        except Exception as error:
+            return make_response(
+                jsonify(
+                    {
+                        "message": "Bad request!",
+                        "error": str(error)
+                    }
+                ), 400
+            )
+            pass
     else:
-        session.delete(category)
-        session.commit()
-        return redirect(url_for('index'))
+        return make_response(
+            jsonify(
+                {
+                    'message': 'Method not Allowed'
+                }
+            ), 405
+        )
 
 
 def isCategoryOwner(category_id):
