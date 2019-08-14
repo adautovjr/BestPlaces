@@ -90,6 +90,35 @@ export class Map extends Component {
     window.openModal = this.openModal;
   }
 
+  getPlaceInfo = async (position) => {
+    var url = "https://api.foursquare.com/v2/venues/explore/";
+    var client_id = "1O2AJ5U5LUSH5MR5KZ0D1AJRINNR2WKBW5S135DZGQJI3EI4";
+    var client_secret = "NL2LSCUWKRF5MODUPKYOLLMJHH0GUMWW45JUVW2V5C2Q0105";
+    var query = "food";
+    var v = "20180819";
+
+    var params = {
+      client_id: client_id,
+      client_secret: client_secret,
+      query: query,
+      v: v,
+      ll: position
+    };
+    
+    return await axios.get(url, { params: params } ).then(res => {
+      if (res.status === 200) {
+        var data = res.data
+        return data;
+      } else {
+        alert("Oops.. We've had problems looking for some data.");
+      }
+    }).catch(error => {
+      console.log(error);
+    });
+
+
+  }
+
   cardClicked = (id) => {
     // eslint-disable-next-line array-callback-return
     let marker = this.state.markers.find(marker => {
@@ -107,7 +136,9 @@ export class Map extends Component {
     window.infowindow.open(window.map, marker);
   }
 
-  openModal = (input) => {
+  openModal = async (input) => {
+    var info = await this.getPlaceInfo(input);
+    console.log(info);
     ModalManager.open(<DetailsModal text={input} onRequestClose={() => true}/>);
   }
 
