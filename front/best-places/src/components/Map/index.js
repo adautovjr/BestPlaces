@@ -20,7 +20,7 @@ export class Map extends Component {
     return (
       <div className="map-container">
         <div className="row no-gutters">
-          <div className="col-12 col-lg-3">
+          <div className="col-12 col-lg-3 aside">
               <div className="container-fluid details-container">
                 <input className="card search-box" type="text" placeholder="Filtrar" onKeyUp={(e) => this.setState({filterTerm: e.target.value})}/>
                 <div className="markers-list row">
@@ -179,7 +179,7 @@ export class Map extends Component {
       axios.post(url, { place },  { headers: { 'Content-Type': 'application/json' } }).then(res => {
         if (res.status === 201) {
           alert("Salvo com sucesso");
-          console.log(res.data.place);
+          console.log("saved", res.data.place);
           this.updateMarker(markerId, res.data.place);
         } else {
           alert("Ocorreu um erro ao salvar o ponto de interesse");
@@ -295,12 +295,13 @@ export class Map extends Component {
 
   getInfoWindowInputTemplate = (lat, lng, id) => {
     return "" +
-    "<input type='text' data-position='"+lat+","+lng+"' data-id='"+id+"' id='marker-input' />"+
-    "<input type='text' id='marker-description' />"+
-    "<input value='Salvar' type='button' onclick='window.saveCheckpoint(document.getElementById(&quot;marker-input&quot;).value, document.getElementById(&quot;marker-input&quot;).dataset.position, document.getElementById(&quot;marker-description&quot;).value, document.getElementById(&quot;marker-input&quot;).dataset.id)'/>"
+    "<input class='d-block form-control mb-2' placeholder='Nome' type='text' data-position='"+lat+","+lng+"' data-id='"+id+"' id='marker-input' />"+
+    "<input class='d-block form-control mb-2' placeholder='Descrição (opcional)' type='text' id='marker-description' />"+
+    "<input class='btn btn-outline-success w-100 mb-2' value='Salvar' type='button' onclick='window.saveCheckpoint(document.getElementById(&quot;marker-input&quot;).value, document.getElementById(&quot;marker-input&quot;).dataset.position, document.getElementById(&quot;marker-description&quot;).value, document.getElementById(&quot;marker-input&quot;).dataset.id)'/>"
   }
 
   getInfoWindowDetailsTemplate = (content) => {
+    content.coordinates = content.coordinates ? content.coordinates : content.position;
     return "" +
     "<div style='width: 300px; padding: 30px'>" +
       "<h1 style='text-align: center;'>" +
@@ -309,10 +310,10 @@ export class Map extends Component {
       "<p style='color: #6c757d;'>" +
         content.description +
       "</p>" +
-      "<button onclick='window.openModal(&quot;"+content.coordinates+"&quot;)'>" +
-        "Saiba mais"+ content.coordinates +
+      "<button class='btn btn-outline-info w-100 mb-2' onclick='window.openModal(&quot;"+content.coordinates+"&quot;)'>" +
+        "Saiba mais" +
       "</button>" +
-      "<button onclick='window.deleteCheckpoint(&quot;"+content.id+"&quot;)'>" +
+      "<button class='btn btn-outline-danger w-100 mb-2' onclick='window.deleteCheckpoint(&quot;"+content.id+"&quot;)'>" +
         "Delete" +
       "</button>" +
     "</div>"

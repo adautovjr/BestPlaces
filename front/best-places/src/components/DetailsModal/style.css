@@ -1,0 +1,11 @@
+.place-container {
+    max-width: 500px;
+}
+.main-container {
+    overflow-y: scroll;
+    max-height: 60vh;
+}
+.close-btn {
+    position: absolute;
+    right: 0;
+}

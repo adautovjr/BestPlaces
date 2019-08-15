@@ -13,3 +13,12 @@ mark.highlighted {
     margin: 10px 0;
     padding: 10px;
 }
+
+@media (max-width: 992px) {
+    .aside {
+        order: 1
+    }
+    #map {
+        height: 90vh;
+    }
+}
