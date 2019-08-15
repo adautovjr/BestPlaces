@@ -105,16 +105,20 @@ export class Map extends Component {
       ll: position
     };
     
-    return await axios.get(url, { params: params } ).then(res => {
-      if (res.status === 200) {
-        var data = res.data
-        return data;
-      } else {
-        alert("Oops.. We've had problems looking for some data.");
-      }
-    }).catch(error => {
-      console.log(error);
-    });
+    try {
+      return await axios.get(url, { params: params } ).then(res => {
+        if (res.status === 200) {
+          return res.data;
+        } else {
+          alert("Oops.. We've had problems looking for some data.");
+        }
+      }).catch(error => {
+        console.log(error);
+        return false;
+      });
+    } catch (error) {
+      return false;
+    }
 
 
   }
@@ -138,8 +142,8 @@ export class Map extends Component {
 
   openModal = async (input) => {
     var info = await this.getPlaceInfo(input);
-    console.log(info);
-    ModalManager.open(<DetailsModal text={input} onRequestClose={() => true}/>);
+    var text = info ? JSON.stringify(info) : "400";
+    ModalManager.open(<DetailsModal text={text} onRequestClose={() => true}/>);
   }
 
   pushMarker = (newMarker) => {
@@ -175,6 +179,7 @@ export class Map extends Component {
       axios.post(url, { place },  { headers: { 'Content-Type': 'application/json' } }).then(res => {
         if (res.status === 201) {
           alert("Salvo com sucesso");
+          console.log(res.data.place);
           this.updateMarker(markerId, res.data.place);
         } else {
           alert("Ocorreu um erro ao salvar o ponto de interesse");
@@ -305,7 +310,7 @@ export class Map extends Component {
         content.description +
       "</p>" +
       "<button onclick='window.openModal(&quot;"+content.coordinates+"&quot;)'>" +
-        "Saiba mais" +
+        "Saiba mais"+ content.coordinates +
       "</button>" +
       "<button onclick='window.deleteCheckpoint(&quot;"+content.id+"&quot;)'>" +
         "Delete" +
