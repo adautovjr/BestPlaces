@@ -4,17 +4,10 @@ import "./style.css";
 
 export class DetailsModal extends Component{
 
-    // getModalTemplate = (info) => {
-    //     var template = "<div>";
-    //     template += info.response.groups[0].items[0].venue.location.formattedAddress[0];
-    //     template += "</div>";
-    //     return template;
-    // }
-
     render(){
         const { text,onRequestClose } = this.props;
         var info = text === "400" ? false : JSON.parse(text);
-        console.log(info);
+        // console.log(info);
         if (info) {
             return (
                 <Modal
@@ -30,7 +23,7 @@ export class DetailsModal extends Component{
                             {/* eslint-disable-next-line array-callback-return */}
                             {info.response.groups[0].items.map( (place, key) => {
                                 if (key < 10){
-                                    var link = "https://www.google.com.br/maps/@"+place.venue.location.lat+","+place.venue.location.lng+",15z";
+                                    var link = "https://www.google.com.br/maps/search/"+place.venue.name+"/"+place.venue.location.lat+","+place.venue.location.lng+",15z";
                                     return (
                                         <div className="col-12 my-2" key={key}>
                                             <div className="card place-container mx-auto p-3">

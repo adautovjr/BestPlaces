@@ -126,11 +126,11 @@ export class Map extends Component {
   cardClicked = (id) => {
     // eslint-disable-next-line array-callback-return
     let marker = this.state.markers.find(marker => {
-      console.log("marker.id", marker.id);
-      console.log("id", id);
+      // console.log("marker.id", marker.id);
+      // console.log("id", id);
       return marker.id === id;
     });
-    console.log(marker);
+    // console.log(marker);
     window.map.setCenter({lat:marker.position.lat(), lng:marker.position.lng()});
     if (marker.content) {
       window.infowindow.setContent(this.getInfoWindowDetailsTemplate(marker.content));
@@ -161,7 +161,7 @@ export class Map extends Component {
       }
     });
     this.setState({ ...markers });
-    console.log(this.state.markers);
+    // console.log(this.state.markers);
   }
 
   saveCheckpoint = async (name, position, description, markerId) => {
@@ -179,7 +179,7 @@ export class Map extends Component {
       axios.post(url, { place },  { headers: { 'Content-Type': 'application/json' } }).then(res => {
         if (res.status === 201) {
           alert("Salvo com sucesso");
-          console.log("saved", res.data.place);
+          // console.log("saved", res.data.place);
           this.updateMarker(markerId, res.data.place);
         } else {
           alert("Ocorreu um erro ao salvar o ponto de interesse");
@@ -204,7 +204,7 @@ export class Map extends Component {
   }
 
   deleteCheckpoint = (markerId) => {
-    console.log("Delete", markerId);
+    // console.log("Delete", markerId);
     var url = "http://localhost:5000/checkpoints/delete";
     
     axios.post(url, { id: markerId },  { headers: { 'Content-Type': 'application/json' } }).then(res => {
@@ -213,7 +213,7 @@ export class Map extends Component {
         alert(res.data.message);
       } else {
         alert("Ocorreu um erro ao deletar o ponto de interesse");
-        console.log(res.data.error);
+        // console.log(res.data.error);
       }
     }).catch(function (error) {
       if (error.response) {
@@ -283,7 +283,7 @@ export class Map extends Component {
             var position = checkpoint.coordinates.split(',');
             this.addMarker( {lat: parseFloat(position[0]),lng: parseFloat(position[1])} , checkpoint);
           });
-          console.log(this.state.markers);
+          // console.log(this.state.markers);
         } else {
           alert("Oops.. We've had problems looking for some data.");
         }
@@ -355,7 +355,7 @@ export class Map extends Component {
     }
 
     this.pushMarker(newMarker);
-    console.log(this.state.markers);
+    // console.log(this.state.markers);
     
   }
 
@@ -365,8 +365,8 @@ export class Map extends Component {
     if (marker.content) {
       window.infowindow.setContent(this.getInfoWindowDetailsTemplate(marker.content));
     } else {
-      console.log(marker);
-      console.log(marker.position);
+      // console.log(marker);
+      // console.log(marker.position);
       window.infowindow.setContent(this.getInfoWindowInputTemplate(marker.position.lat(), marker.position.lng(), marker.id));
     }
   }

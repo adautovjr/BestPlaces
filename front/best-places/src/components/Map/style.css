@@ -13,6 +13,9 @@ mark.highlighted {
     margin: 10px 0;
     padding: 10px;
 }
+button.close-btn {
+    z-index: 99999999;
+}
 
 @media (max-width: 992px) {
     .aside {
@@ -20,5 +23,8 @@ mark.highlighted {
     }
     #map {
         height: 90vh;
+    }
+    .interests-title {
+        font-size: 32px;
     }
 }
