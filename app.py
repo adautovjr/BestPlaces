@@ -30,20 +30,22 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 
 # Checkpoints Controllers
 @app.route('/checkpoints/json')
-@cross_origin(origin='*',headers=['Content-Type','Authorization'])
+@cross_origin(origin='*', headers=['Content-Type', 'Authorization'])
 def viewCheckpointsJson():
     try:
         if 'profile' in login_session:
             user = login_session['profile']
         else:
             user = False
-    
+
         checkpoints = session.query(Checkpoint).all()
-    
+
         return make_response(
             jsonify(
                 {
-                    'checkpoints': [checkpoint.serialize for checkpoint in checkpoints],
+                    'checkpoints': [
+                        checkpoint.serialize for checkpoint in checkpoints
+                    ],
                     'user': user
                 }
             ), 200
@@ -52,18 +54,19 @@ def viewCheckpointsJson():
         return make_response(
             jsonify(
                 {
-                    "message": "Bad request!" 
+                    "message": "Bad request!"
                 }
             ), 400
         )
 
+
 @app.route('/checkpoints/create', methods=['POST'])
-@cross_origin(origin='*',headers=['Content-Type','Authorization'])
+@cross_origin(origin='*', headers=['Content-Type', 'Authorization'])
 def createCheckpoint():
     if request.method == 'POST':
         try:
             entry = request.get_json(force=True)
-        
+
             newEntry = Checkpoint(
                 name=entry["place"]['name'],
                 coordinates=entry["place"]['position'],
@@ -84,7 +87,7 @@ def createCheckpoint():
             return make_response(
                 jsonify(
                     {
-                        "message": "Bad request!" 
+                        "message": "Bad request!"
                     }
                 ), 400
             )
@@ -100,13 +103,14 @@ def createCheckpoint():
 
 
 @app.route('/checkpoints/delete', methods=['POST'])
-@cross_origin(origin='*',headers=['Content-Type','Authorization'])
+@cross_origin(origin='*', headers=['Content-Type', 'Authorization'])
 def deleteCheckpoint():
     if request.method == 'POST':
         try:
             entry = request.get_json(force=True)
-        
-            checkpoint = session.query(Checkpoint).filter_by(id=entry['id']).one()
+
+            checkpoint = session.query(
+                Checkpoint).filter_by(id=entry['id']).one()
 
             session.delete(checkpoint)
             session.commit()
@@ -114,7 +118,7 @@ def deleteCheckpoint():
             return make_response(
                 jsonify(
                     {
-                        "message": "Successfully deleted!" 
+                        "message": "Successfully deleted!"
                     }
                 ), 200
             )

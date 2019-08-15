@@ -34,6 +34,7 @@ class Checkpoint(Base):
             'description': self.description
         }
 
+
 engine = create_engine('postgresql://'+os.getenv('user') +
                        ':'+os.getenv('password')+'@localhost:5432/bestplaces')
 
