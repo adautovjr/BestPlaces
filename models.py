@@ -14,31 +14,10 @@ load_dotenv()
 Base = declarative_base()
 
 
-class User(Base):
-    __tablename__ = 'users'
-
-    id = Column(Integer, primary_key=True)
-    name = Column(String(250), nullable=False)
-    email = Column(String(250), nullable=False)
-    picture = Column(String(250))
-    checkpoints = relationship('Checkpoint')
-
-    @property
-    def serialize(self):
-
-        return {
-            'id': self.id,
-            'name': self.name,
-            'email': self.email,
-            'picture': self.picture
-        }
-
-
 class Checkpoint(Base):
     __tablename__ = 'checkpoints'
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id'))
     name = Column(String(250), nullable=False)
     coordinates = Column(String(250), nullable=False)
     address = Column(String(250))

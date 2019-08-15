@@ -68,8 +68,7 @@ def createCheckpoint():
                 name=entry["place"]['name'],
                 coordinates=entry["place"]['position'],
                 address=entry["place"]['address'],
-                description=entry["place"]['description'],
-                user_id=1
+                description=entry["place"]['description']
             )
             session.add(newEntry)
             session.flush()
