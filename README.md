@@ -10,9 +10,21 @@ Udacity Project
 ## Setup
 
 1. Setup ```.env``` file accordingly with yout postgresql user and password
+
+1.1. If you can't remember your postgres credentials, you can reset them by running:
+  ```
+  $ sudo -u postgres psql
+
+  $ =>\password
+  ```
 2. Run the code below to install all the dependencies
 ```
 $ pip3 install -r requirements.txt
+```
+
+2.1. Note: if you encounter issues when running this code you're required to run each line of ```requirements.txt``` as show below:
+```
+$ pip3 install [module_name] --user
 ```
 
 ## Usage
