@@ -6,17 +6,18 @@ Udacity Project
 * python 3
 * pip 3
 * postgresql
+* node version 8.9.1
+* npm
 
 ## Setup
-
 1. Setup ```.env``` file accordingly with yout postgresql user and password
 
 1.1. If you can't remember your postgres credentials, you can reset them by running:
-  ```
-  $ sudo -u postgres psql
+```
+$ sudo -u postgres psql
 
-  $ =>\password
-  ```
+$ =>\password
+```
 2. Run the code below to install all the dependencies
 ```
 $ pip3 install -r requirements.txt
