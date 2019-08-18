@@ -1,8 +1,11 @@
-flask
-python-dotenv
+Flask
+Flask-Cors
 requests
 authlib
 six
 sqlalchemy
 sqlalchemy-utils
+psycopg2
 psycopg2-binary
+dotenv
+python-dotenv
