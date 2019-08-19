@@ -137,6 +137,11 @@ export class Map extends Component {
     } else {
       window.infowindow.setContent(this.getInfoWindowInputTemplate(marker.position.lat(), marker.position.lng(), marker.id));
     }
+    // eslint-disable-next-line array-callback-return
+    this.state.markers.map( (marker) => {
+      marker.setAnimation(null);
+    });
+    marker.setAnimation(window.google.maps.Animation.cn);
     window.infowindow.open(window.map, marker);
   }
 
@@ -362,6 +367,10 @@ export class Map extends Component {
   markerClicked = (marker) => {
     window.infowindow.setContent("Loading data....");
     window.infowindow.open(window.map, marker);
+    // eslint-disable-next-line array-callback-return
+    this.state.markers.map((marker)=> {
+      marker.setAnimation(null);
+    });
     if (marker.content) {
       window.infowindow.setContent(this.getInfoWindowDetailsTemplate(marker.content));
     } else {
@@ -369,6 +378,7 @@ export class Map extends Component {
       // console.log(marker.position);
       window.infowindow.setContent(this.getInfoWindowInputTemplate(marker.position.lat(), marker.position.lng(), marker.id));
     }
+    marker.setAnimation(window.google.maps.Animation.cn);
   }
 
   addMapListener = () => {
