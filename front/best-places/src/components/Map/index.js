@@ -12,10 +12,12 @@ export class Map extends Component {
     filterTerm: ""
   };
 
+  // Chama o script que carrega o mapa
   renderMap = () => {
     loadScript("https://maps.googleapis.com/maps/api/js?key=AIzaSyAL39el3Xa4MZQIQ_l9XFe4BJd-PpiiRd0&callback=initMap");
   }
 
+  // Renderiza a aplicação
   render() {
     return (
       <div className="map-container">
@@ -79,6 +81,7 @@ export class Map extends Component {
     );
   }
 
+  // Carrega e seta componentes necessários para o funcionamento da aplicação
   componentDidMount() {
     this.renderMap();
     window.initMap = this.initMap;
@@ -88,8 +91,21 @@ export class Map extends Component {
     window.markerClicked = this.markerClicked;
     window.filterMarkers = this.filterMarkers;
     window.fetchInfo = this.fetchInfo;
+    window.gm_authFailure = this.gm_authFailure;
   }
 
+  // Garante que o usuário não será deixado sem entender pq a aplicação está funcionando
+  gm_authFailure = (error) => {
+    alert("Houve um erro na execução da aplicação. Pedimos desculpa pelo imprevisto.");
+  };
+
+  // Garante que o usuário não será deixado sem entender pq a aplicação está funcionando
+  componentDidCatch(error, errorInfo) {
+    // You can also log the error to an error reporting service
+    alert("Houve um erro na execução da aplicação, favor reportar o erro a seguir: "+errorInfo);
+  }
+
+  // Busca informação na API do Foursquare sobre uma determinada ${position}
   getPlaceInfo = async (position) => {
     var url = "https://api.foursquare.com/v2/venues/explore/";
     var client_id = "1O2AJ5U5LUSH5MR5KZ0D1AJRINNR2WKBW5S135DZGQJI3EI4";
@@ -123,6 +139,7 @@ export class Map extends Component {
 
   }
 
+  // Trata o evento de clique no card #${id} do menu
   cardClicked = (id) => {
     window.infowindow.close();
     // eslint-disable-next-line array-callback-return
@@ -134,7 +151,7 @@ export class Map extends Component {
     // console.log(marker);
     window.map.setCenter({lat:marker.position.lat(), lng:marker.position.lng()});
     if (marker.content) {
-      window.infowindow.setContent(this.getInfoWindowDetailsTemplate(marker.content));
+      this.fetchInfo(marker.id, marker.content.coordinates)
     } else {
       window.infowindow.setContent(this.getInfoWindowInputTemplate(marker.position.lat(), marker.position.lng(), marker.id));
     }
@@ -148,25 +165,32 @@ export class Map extends Component {
     },600);
   }
 
-  fetchInfo = async (content) => {
-    console.log(content);
-    var info = await this.getPlaceInfo(content.position);
-    // var text = info ? JSON.stringify(info) : "400";
+  // Seta informação sobre o marker #${id} em um infoWindow
+  fetchInfo = async (id, position) => {
+    var info = await this.getPlaceInfo(position);
+    var markers = this.state.markers;
+    var infomarker;
+    // eslint-disable-next-line array-callback-return
+    markers.map((marker) => {
+      if ( (""+marker.id) === (""+id) ) {
+        infomarker = marker;
+      }
+    });
     info = info ? info : "400";
     // ModalManager.open(<DetailsModal text={text} onRequestClose={() => true}/>);
     if (info !== "400") {
-      console.log(info);
-      // eslint-disable-next-line array-callback-return
-      window.infoWindow.setContent(this.updateInfoWindowTemplate(content, info.response.groups[0].items));
+      window.infowindow.setContent(this.updateInfoWindowTemplate(infomarker.content, info.response.groups[0].items));
     }
   }
 
+  // Adiciona um novo marcador ao state atual da aplicação
   pushMarker = (newMarker) => {
     this.setState({
       markers: [...this.state.markers, newMarker]
     });
   }
 
+  // Atualiza um marcador já existente na aplicação
   updateMarker = (id, content) => {
     let markers = this.state.markers;
     // eslint-disable-next-line array-callback-return
@@ -179,6 +203,7 @@ export class Map extends Component {
     // console.log(this.state.markers);
   }
 
+  // Salva o lugar no banco de dados com informações preenchidas pelo usuário
   saveCheckpoint = async (name, position, description, markerId) => {
     window.infowindow.close();
     window.infowindow.setContent("");
@@ -204,6 +229,7 @@ export class Map extends Component {
     
   }
 
+  // Deleta o marcardor #${markerId} da aplicação
   deleteMarker = (markerId) => {
     let markers = this.state.markers;
     
@@ -218,6 +244,7 @@ export class Map extends Component {
     this.setState({ markers });
   }
 
+  // Deleta o marcardor #${markerId} da base de dados
   deleteCheckpoint = (markerId) => {
     // console.log("Delete", markerId);
     var url = "http://localhost:5000/checkpoints/delete";
@@ -247,6 +274,7 @@ export class Map extends Component {
     });
   }
 
+  // Consulta a API do google na coordenada ${position} e retorna um endereço
   getAddress = (position) => {
     var url = "https://maps.googleapis.com/maps/api/geocode/json?latlng="+position+"&key=AIzaSyAL39el3Xa4MZQIQ_l9XFe4BJd-PpiiRd0"
     
@@ -268,6 +296,7 @@ export class Map extends Component {
 
   }
 
+  // Inicializa o mapa da aplicação
   initMap = () => {
     // The location of Uluru
     // var brasil = {lat: -13.702797, lng:-69.6865109};
@@ -286,6 +315,7 @@ export class Map extends Component {
     this.addMapListener();
   }
 
+  // Consulta a API para retornar marcadores salvos
   fetchMarkers = () => {
     var reqUrl = 'http://localhost:5000/checkpoints/json';
 
@@ -308,6 +338,7 @@ export class Map extends Component {
     }
   }
 
+  // Retorna o template para o infoWindow onde o usuário pode salvar aquele marcador
   getInfoWindowInputTemplate = (lat, lng, id) => {
     return "" +
     "<input class='d-block form-control mb-2' placeholder='Nome' type='text' data-position='"+lat+","+lng+"' data-id='"+id+"' id='marker-input' />"+
@@ -315,10 +346,11 @@ export class Map extends Component {
     "<input class='btn btn-outline-success w-100 mb-2' value='Salvar' type='button' onclick='window.saveCheckpoint(document.getElementById(&quot;marker-input&quot;).value, document.getElementById(&quot;marker-input&quot;).dataset.position, document.getElementById(&quot;marker-description&quot;).value, document.getElementById(&quot;marker-input&quot;).dataset.id)'/>"
   }
 
+  // Retorna o template para o infoWindow onde o usuário pode ver informações sobre aquele lugar
   getInfoWindowDetailsTemplate = (content) => {
     content.coordinates = content.coordinates ? content.coordinates : content.position;
     return "" +
-    "<div style='width: 300px; padding: 30px'>" +
+    "<div class='info-window-container'>" +
       "<h1 style='text-align: center;'>" +
         content.name +
       "</h1>" +
@@ -326,7 +358,7 @@ export class Map extends Component {
         content.description +
       "</p>" +
       "<div id='content-container'>" +
-        "<button class='btn btn-outline-info w-100 mb-2' onclick='window.fetchInfo(&quot;"+JSON.stringify(content)+"&quot;)'>" +
+        "<button class='btn btn-outline-info w-100 mb-2' onclick='window.fetchInfo(&quot;"+content.id+"&quot;, &quot;"+content.coordinates+"&quot;)'>" +
           "Saiba mais" +
         "</button>" +
       "</div>" + 
@@ -336,10 +368,11 @@ export class Map extends Component {
     "</div>"
   }
 
+  // Retorna o template para o infoWindow onde o usuário pode ver informações extras sobre aquele lugar
   updateInfoWindowTemplate = (content, items) => {
     content.coordinates = content.coordinates ? content.coordinates : content.position;
     var result = "" +
-    "<div style='width: 300px; padding: 30px'>" +
+    "<div class='info-window-container'>" +
       "<h1 style='text-align: center;'>" +
         content.name +
       "</h1>" +
@@ -348,7 +381,7 @@ export class Map extends Component {
       "</p>" +
       "<div id='content-container' class='row no-gutters'>";
     
-          // eslint-disable-next-line array-callback-return
+        // eslint-disable-next-line array-callback-return
         items.map( (place, key) => {
             if (key < 10){
               var link = "https://www.google.com.br/maps/search/"+place.venue.name+"/"+place.venue.location.lat+","+place.venue.location.lng+",15z";
@@ -379,6 +412,7 @@ export class Map extends Component {
     return result;
   }
 
+  // Gera uma key aleatória para pós-identificação de um marcador não salvo na base de dados
   makeid = (length) => {
     var result = '';
     var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -389,6 +423,7 @@ export class Map extends Component {
     return result;
   }
 
+  // Adiciona um marcador ao mapa
   addMarker = (position, content=false) => {
     window.infowindow.close();
 
@@ -419,6 +454,7 @@ export class Map extends Component {
     
   }
 
+  // Trata o evento de clique no marcador #${marker.id}
   markerClicked = (marker) => {
     window.infowindow.close();
     window.infowindow.setContent("Loading data....");
@@ -439,6 +475,7 @@ export class Map extends Component {
     },600);
   }
 
+  // Adiciona um tratador de evento de clique no mapa
   addMapListener = () => {
     window.google.maps.event.addListener(window.map, 'click', function(event){
 
@@ -452,6 +489,7 @@ export class Map extends Component {
 
 }
 
+// Carrega um script na DOM
 function loadScript(url) {
   var index = window.document.getElementsByTagName("script")[0];
   var script = window.document.createElement("script")

@@ -16,6 +16,12 @@ mark.highlighted {
 button.close-btn {
     z-index: 99999999;
 }
+.gm-style-iw{
+    max-height: 400px!important;
+}
+.info-window-container {
+    width: 300px;
+}
 
 @media (max-width: 992px) {
     .aside {
@@ -26,5 +32,8 @@ button.close-btn {
     }
     .interests-title {
         font-size: 32px;
+    }
+    .info-window-container {
+        max-width: 100%;
     }
 }
