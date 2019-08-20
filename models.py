@@ -61,7 +61,7 @@ if seed:
     checkpoint2 = Checkpoint(
         name="Morro do Careca",
         coordinates="-5.8837034,-35.1653928",
-        address="Praia de Ponta Negra s/n - Ponta Negra, Natal - RN, 59090-210",
+        address="Praia de Ponta Negra s/n - Ponta Negra",
         description="Atração turística"
     )
     session.add(checkpoint2)
@@ -77,7 +77,7 @@ if seed:
     checkpoint4 = Checkpoint(
         name="Arena das Dunas",
         coordinates="-5.8263732,-35.2183222",
-        address="Av. Prudente de Morais, 5121 - Lagoa Nova, Natal - RN, 59075-000",
+        address="Av. Prudente de Morais, 5121 - Lagoa Nova",
         description="Estádio de futebol"
     )
     session.add(checkpoint4)
@@ -85,13 +85,14 @@ if seed:
     checkpoint5 = Checkpoint(
         name="Parque das Dunas",
         coordinates="-5.8106293,-35.1971743",
-        address="Av. Alm. Alexandrino de Alencar, s/n - Tirol, Natal - RN, 59064-630",
+        address="Av. Alm. Alexandrino de Alencar, s/n - Tirol",
         description="Parque ecológico"
     )
     session.add(checkpoint5)
-    
+
     try:
         session.commit()
         pass
     except:
         session.rollback()
+        pass
