@@ -57,7 +57,7 @@ export class Map extends Component {
                                     textToHighlight={desc}
                                   />
                                 </div>
-                                <div className="btn btn-success" onClick={this.openModal.bind(this, marker.content ? marker.content.coordinates : undefined)}>
+                                <div className="btn btn-success" onClick={this.fetchInfo.bind(this, marker.content ? marker.content : undefined)}>
                                   Saiba mais
                                 </div>
                               </div>
@@ -87,7 +87,7 @@ export class Map extends Component {
     window.deleteCheckpoint = this.deleteCheckpoint;
     window.markerClicked = this.markerClicked;
     window.filterMarkers = this.filterMarkers;
-    window.openModal = this.openModal;
+    window.fetchInfo = this.fetchInfo;
   }
 
   getPlaceInfo = async (position) => {
@@ -124,6 +124,7 @@ export class Map extends Component {
   }
 
   cardClicked = (id) => {
+    window.infowindow.close();
     // eslint-disable-next-line array-callback-return
     let marker = this.state.markers.find(marker => {
       // console.log("marker.id", marker.id);
@@ -142,13 +143,22 @@ export class Map extends Component {
       marker.setAnimation(null);
     });
     marker.setAnimation(window.google.maps.Animation.cn);
-    window.infowindow.open(window.map, marker);
+    setTimeout(function(){
+      window.infowindow.open(window.map, marker);
+    },600);
   }
 
-  openModal = async (input) => {
-    var info = await this.getPlaceInfo(input);
-    var text = info ? JSON.stringify(info) : "400";
-    ModalManager.open(<DetailsModal text={text} onRequestClose={() => true}/>);
+  fetchInfo = async (content) => {
+    console.log(content);
+    var info = await this.getPlaceInfo(content.position);
+    // var text = info ? JSON.stringify(info) : "400";
+    info = info ? info : "400";
+    // ModalManager.open(<DetailsModal text={text} onRequestClose={() => true}/>);
+    if (info !== "400") {
+      console.log(info);
+      // eslint-disable-next-line array-callback-return
+      window.infoWindow.setContent(this.updateInfoWindowTemplate(content, info.response.groups[0].items));
+    }
   }
 
   pushMarker = (newMarker) => {
@@ -315,13 +325,58 @@ export class Map extends Component {
       "<p style='color: #6c757d;'>" +
         content.description +
       "</p>" +
-      "<button class='btn btn-outline-info w-100 mb-2' onclick='window.openModal(&quot;"+content.coordinates+"&quot;)'>" +
-        "Saiba mais" +
-      "</button>" +
+      "<div id='content-container'>" +
+        "<button class='btn btn-outline-info w-100 mb-2' onclick='window.fetchInfo(&quot;"+JSON.stringify(content)+"&quot;)'>" +
+          "Saiba mais" +
+        "</button>" +
+      "</div>" + 
       "<button class='btn btn-outline-danger w-100 mb-2' onclick='window.deleteCheckpoint(&quot;"+content.id+"&quot;)'>" +
         "Delete" +
       "</button>" +
     "</div>"
+  }
+
+  updateInfoWindowTemplate = (content, items) => {
+    content.coordinates = content.coordinates ? content.coordinates : content.position;
+    var result = "" +
+    "<div style='width: 300px; padding: 30px'>" +
+      "<h1 style='text-align: center;'>" +
+        content.name +
+      "</h1>" +
+      "<p style='color: #6c757d;'>" +
+        content.description +
+      "</p>" +
+      "<div id='content-container' class='row no-gutters'>";
+    
+          // eslint-disable-next-line array-callback-return
+        items.map( (place, key) => {
+            if (key < 10){
+              var link = "https://www.google.com.br/maps/search/"+place.venue.name+"/"+place.venue.location.lat+","+place.venue.location.lng+",15z";
+              result += "" +
+              "<div class='col-12 my-2'>" +
+                  "<div class='card place-container mx-auto p-3'>" +
+                      "<h3 class='text-center'>" +
+                          place.venue.name +
+                      "</h3>" +
+                      "<div class='info-container'>" +
+                          "<p class='text-muted'>" + place.venue.location.formattedAddress[0] + "</p>" +
+                      "</div>" +
+                      "<div class='text-center'>" +
+                          "<a class='btn btn-outline-info' href='" + link + "' target='_blank' rel='noopener noreferrer'>" +
+                              "Ver no Maps" +
+                          "</a>" +
+                      "</div>" +
+                  "</div>" +
+              "</div>";
+            }
+        });
+
+    result += "</div>" + 
+      "<button class='btn btn-outline-danger w-100 mb-2' onclick='window.deleteCheckpoint(&quot;"+content.id+"&quot;)'>" +
+        "Delete" +
+      "</button>" +
+    "</div>";
+    return result;
   }
 
   makeid = (length) => {
@@ -365,12 +420,13 @@ export class Map extends Component {
   }
 
   markerClicked = (marker) => {
+    window.infowindow.close();
     window.infowindow.setContent("Loading data....");
-    window.infowindow.open(window.map, marker);
     // eslint-disable-next-line array-callback-return
     this.state.markers.map((marker)=> {
       marker.setAnimation(null);
     });
+    marker.setAnimation(window.google.maps.Animation.cn);
     if (marker.content) {
       window.infowindow.setContent(this.getInfoWindowDetailsTemplate(marker.content));
     } else {
@@ -378,7 +434,9 @@ export class Map extends Component {
       // console.log(marker.position);
       window.infowindow.setContent(this.getInfoWindowInputTemplate(marker.position.lat(), marker.position.lng(), marker.id));
     }
-    marker.setAnimation(window.google.maps.Animation.cn);
+    setTimeout(function(){
+      window.infowindow.open(window.map, marker);
+    },600);
   }
 
   addMapListener = () => {

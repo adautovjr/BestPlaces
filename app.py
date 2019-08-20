@@ -1,16 +1,9 @@
-from flask import Flask, render_template, request, redirect, make_response
-from flask import url_for, flash, jsonify, Response, session as login_session
+from flask import Flask, request, make_response
+from flask import jsonify, session as login_session
 from flask_cors import CORS, cross_origin
 from models import Base, Checkpoint
-from sqlalchemy import Column, ForeignKey, Integer, String
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship, sessionmaker
-from sqlalchemy.inspection import inspect
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
-import random
-import string
-from six.moves.urllib.parse import urlencode
-from functools import wraps
 import os.path
 
 engine = create_engine('postgresql://'+os.getenv('user') +
@@ -63,43 +56,34 @@ def viewCheckpointsJson():
 @app.route('/checkpoints/create', methods=['POST'])
 @cross_origin(origin='*', headers=['Content-Type', 'Authorization'])
 def createCheckpoint():
-    if request.method == 'POST':
-        try:
-            entry = request.get_json(force=True)
+    try:
+        entry = request.get_json(force=True)
 
-            newEntry = Checkpoint(
-                name=entry["place"]['name'],
-                coordinates=entry["place"]['position'],
-                address=entry["place"]['address'],
-                description=entry["place"]['description']
-            )
-            session.add(newEntry)
-            session.flush()
-            entry['place']['id'] = newEntry.id
-            session.commit()
+        newEntry = Checkpoint(
+            name=entry["place"]['name'],
+            coordinates=entry["place"]['position'],
+            address=entry["place"]['address'],
+            description=entry["place"]['description']
+        )
+        session.add(newEntry)
+        session.flush()
+        entry['place']['id'] = newEntry.id
+        session.commit()
 
-            return make_response(
-                jsonify(
-                    entry
-                ), 201
-            )
-        except Exception:
-            return make_response(
-                jsonify(
-                    {
-                        "message": "Bad request!"
-                    }
-                ), 400
-            )
-            pass
-    else:
+        return make_response(
+            jsonify(
+                entry
+            ), 201
+        )
+    except Exception:
         return make_response(
             jsonify(
                 {
-                    'message': 'Method not Allowed'
+                    "message": "Bad request!"
                 }
-            ), 405
+            ), 400
         )
+        pass
 
 
 @app.route('/checkpoints/delete', methods=['POST'])
