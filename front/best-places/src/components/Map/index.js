@@ -379,6 +379,9 @@ export class Map extends Component {
       "<p style='color: #6c757d;'>" +
         content.description +
       "</p>" +
+      "<p style='color: #6c757d;'>" +
+        "Dados fornecidos pelo Foursquare <img style='max-width:15px' class='img-fluid' src='/img/foursquare.png' alt='foursquare' />" +
+      "</p>" +
       "<div id='content-container' class='row no-gutters'>";
     
         // eslint-disable-next-line array-callback-return
