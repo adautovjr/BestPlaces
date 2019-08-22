@@ -1,6 +1,8 @@
 # BestPlaces
 Udacity Project
 
+*** Contains data provided by [Google](https://google.com) and [Foursquare](https://foursquare.com/)
+
 ## Requirements
 
 * python 3
