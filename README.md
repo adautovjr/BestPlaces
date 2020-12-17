@@ -1,5 +1,5 @@
 # BestPlaces
-This is an Udacity's React course project submission where I used python's web framework flask as a backend application and React as frontend application to develop a way to catalog and organize points of interest in your city.
+This is an Udacity's Full Stack Web Developer course project submission where I used python's web framework flask as a backend application and React as frontend application to develop a way to catalog and organize points of interest in your city.
 
 *** Contains data provided by [Google](https://google.com) and [Foursquare](https://foursquare.com/)
 
